@@ -1,0 +1,106 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800&family=Roboto+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Roboto Mono', monospace;
+  
+  --color-slg-navy: #1E487A;
+  --color-slg-cyan: #009CDE;
+  --color-dark-text: #0F172A;
+  --color-muted-text: #475569;
+}
+
+/* Custom reset and scrollbars */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-sans);
+  background: linear-gradient(to bottom, #b5c4d0 0%, #d5e0e9 35%, #ebf0f4 65%, #ffffff 100%);
+  color: var(--color-dark-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.08);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 156, 222, 0.4);
+}
+
+/* Light Glassmorphism utility classes */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.04);
+}
+
+.glass-input {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.03);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-input:focus-within {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(0, 156, 222, 0.5);
+  box-shadow: 0 8px 35px rgba(0, 156, 222, 0.12);
+}
+
+.glass-message-ai {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Typography styles */
+.autono-title {
+  font-weight: 300;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #0f172a;
+}
+
+.autono-subtitle {
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  color: #334155;
+}
+
+.autono-nav-link {
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+  color: #334155;
+  transition: color 0.15s ease;
+}
+
+.autono-nav-link:hover {
+  color: #0f172a;
+}
+
+/* Glowing effects for light theme */
+.glow-cyan-light {
+  box-shadow: 0 0 20px rgba(0, 156, 222, 0.2);
+}
