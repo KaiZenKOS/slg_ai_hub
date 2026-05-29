@@ -8,14 +8,13 @@ export const useChat = () => {
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  // On garde uniquement les ACTIONS du store (stables, jamais stale)
+  // Les VALEURS (apiUrl, apiKey, model, activeConversationId) sont lues
+  // via getState() au moment de l'envoi pour éviter les closures périmées.
   const {
-    activeConversationId,
     createConversation,
     addMessage,
     updateLastMessageContent,
-    apiUrl,
-    apiKey,
-    model,
   } = useChatStore();
 
   /**
@@ -30,6 +29,9 @@ export const useChat = () => {
 
   const sendMessage = async (content: string) => {
     if (!content.trim()) return;
+
+    // ✅ Lecture LIVE du store au moment de l'envoi (évite les stale closures)
+    const { activeConversationId, apiUrl, apiKey, model } = useChatStore.getState();
 
     let convId = activeConversationId;
 
@@ -76,7 +78,7 @@ export const useChat = () => {
         headers['Authorization'] = `Bearer ${apiKey}`;
       }
 
-      // Récupérer l'état le plus récent des conversations (including the user message)
+      // Récupérer l'état le plus récent des conversations pour construire le contexte
       const latestConversations = useChatStore.getState().conversations;
       const currentConversation = latestConversations.find((c) => c.id === convId);
 
@@ -89,10 +91,13 @@ export const useChat = () => {
             }))
         : [{ role: 'user', content }];
 
-      const response = await fetch(`${apiUrl}/chat/completions`, {
+      // Normaliser l'URL (éviter les double-slash)
+      const baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
+
+      const response = await fetch(`${baseUrl}/chat/completions`, {
         method: 'POST',
         headers,
-        signal: controller.signal, // ← AbortController signal
+        signal: controller.signal,
         body: JSON.stringify({
           model: model || 'qwen-3.6',
           messages: apiMessages,
@@ -103,7 +108,7 @@ export const useChat = () => {
       if (!response.ok) {
         const errorText = await response.text().catch(() => '');
         throw new Error(
-          `Erreur API (${response.status}): ${errorText || response.statusText || 'Erreur inconnue'}`
+          `HTTP ${response.status} — ${errorText || response.statusText || 'Erreur inconnue'}`
         );
       }
 
@@ -111,7 +116,7 @@ export const useChat = () => {
       const decoder = new TextDecoder('utf-8');
 
       if (!reader) {
-        throw new Error("Impossible d'initialiser le flux de lecture.");
+        throw new Error("Impossible d'initialiser le flux de lecture SSE.");
       }
 
       let done = false;
@@ -154,7 +159,7 @@ export const useChat = () => {
         }
       }
 
-      // Parser le buffer restant si besoin
+      // Parser le buffer restant
       if (buffer.trim().startsWith('data: ')) {
         const dataStr = buffer.trim().slice(6).trim();
         if (dataStr !== '[DONE]') {
@@ -170,21 +175,47 @@ export const useChat = () => {
       }
 
     } catch (err: any) {
-      // Ne pas afficher d'erreur si c'est un abort volontaire de l'utilisateur
       if (err.name === 'AbortError') {
-        console.info('Génération arrêtée par l\'utilisateur.');
-        // Si le contenu est vide, mettre un placeholder
+        // Arrêt volontaire par l'utilisateur
+        console.info("Génération arrêtée par l'utilisateur.");
         if (!accumulatedContent) {
           updateLastMessageContent(convId, '*Génération interrompue par l\'utilisateur.*');
         }
       } else {
+        // Erreur réseau ou API — on construit un message d'erreur précis
         console.error('Erreur lors du streaming :', err);
-        const errMsg = err.message || 'Une erreur réseau est survenue.';
-        setError(errMsg);
-        updateLastMessageContent(
-          convId,
-          `❌ **Erreur de connexion avec l'API**\n\n> **Détails :** ${errMsg}\n\n*Veuillez vérifier l'adresse de votre API locale (${apiUrl}) ou votre clé API dans les réglages.*`
-        );
+
+        const { apiUrl: currentUrl } = useChatStore.getState();
+        const baseUrl = currentUrl.endsWith('/') ? currentUrl.slice(0, -1) : currentUrl;
+
+        let userFacingError: string;
+
+        if (err instanceof TypeError) {
+          // TypeError = CORS, DNS, connexion refusée — le navigateur ne donne pas plus de détails
+          const isLocalhost = currentUrl.includes('localhost') || currentUrl.includes('127.0.0.1');
+          if (isLocalhost) {
+            userFacingError =
+              `**Erreur réseau — URL pointe sur \`${baseUrl}\` (localhost)**\n\n` +
+              `> Le backend n'est probablement pas sur ce PC. ` +
+              `Allez dans **Réglages** et mettez l'adresse correcte : \`http://192.168.10.90/v1\``;
+          } else {
+            userFacingError =
+              `**Erreur réseau vers \`${baseUrl}\`**\n\n` +
+              `> Causes possibles :\n` +
+              `> 1. **CORS non activé** sur LiteLLM — ajoutez \`allow_origins=["*"]\` dans la config du serveur\n` +
+              `> 2. **Serveur éteint** — vérifiez que LiteLLM tourne bien\n` +
+              `> 3. **URL incorrecte** — vérifiez dans les Réglages\n\n` +
+              `*Appuyez sur **F12 → Console** pour voir l'erreur exacte du navigateur.*`;
+          }
+        } else {
+          userFacingError =
+            `**Erreur API**\n\n` +
+            `> \`${err.message || 'Erreur inconnue'}\`\n\n` +
+            `*URL utilisée : \`${baseUrl}\` — Vérifiez les Réglages si cette adresse est incorrecte.*`;
+        }
+
+        setError(err.message || 'Erreur réseau');
+        updateLastMessageContent(convId, `❌ ${userFacingError}`);
       }
     } finally {
       setIsLoading(false);
@@ -193,11 +224,19 @@ export const useChat = () => {
     }
   };
 
+  // Exposer aussi les valeurs du store pour les composants qui en ont besoin
+  const { activeConversationId, apiUrl, apiKey, model } = useChatStore();
+
   return {
     sendMessage,
     stopGeneration,
     isLoading,
     isStreaming,
     error,
+    // valeurs live pour l'affichage
+    activeConversationId,
+    apiUrl,
+    apiKey,
+    model,
   };
 };
