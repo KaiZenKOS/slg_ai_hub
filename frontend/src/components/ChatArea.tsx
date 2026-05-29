@@ -5,16 +5,17 @@ import { Sparkles } from 'lucide-react';
 
 interface ChatAreaProps {
   onSendPrompt: (prompt: string) => void;
+  isStreaming: boolean;
 }
 
-export const ChatArea: React.FC<ChatAreaProps> = ({ onSendPrompt }) => {
+export const ChatArea: React.FC<ChatAreaProps> = ({ onSendPrompt, isStreaming }) => {
   const { conversations, activeConversationId } = useChatStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const activeConversation = conversations.find(
     (c) => c.id === activeConversationId
   );
-  
+
   const messages = activeConversation?.messages || [];
 
   const scrollToBottom = () => {
@@ -40,27 +41,31 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ onSendPrompt }) => {
     }
   ];
 
+  // Identifier le dernier message AI (pour lui appliquer le curseur de streaming)
+  const lastAiMessageIndex = messages.reduceRight((found, msg, idx) => {
+    if (found !== -1) return found;
+    return msg.role === 'assistant' ? idx : -1;
+  }, -1);
+
   return (
     <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6 w-full flex flex-col justify-between items-center relative">
       <div className="w-full max-w-3xl flex-1 flex flex-col justify-start">
         {messages.length === 0 ? (
-          /* Welcome screen matching Autono design */
+          /* Welcome screen */
           <div className="flex-1 flex flex-col justify-center items-center py-8 md:py-16 text-center select-none animate-in fade-in duration-700">
-            
-            {/* Title styling inspired by Autono */}
+
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-light tracking-[0.16em] text-slate-900 uppercase leading-[1.25] mb-4 font-sans select-text">
               L'avenir de<br />l'expertise est ici
             </h1>
-            
-            {/* Subtitle styling inspired by Autono */}
+
             <p className="text-slate-600 font-light text-xs md:text-sm tracking-wide max-w-lg mx-auto leading-relaxed mb-6 select-text">
               Découvrez l'expérience de gestion comptable et d'audit la plus avancée avec SLG AI Hub.
             </p>
 
-            {/* Spacer for the 3D Sphere of points to float centrally */}
+            {/* Spacer for the 3D Sphere */}
             <div className="h-32 md:h-48 w-full pointer-events-none" />
 
-            {/* Examples grid at the bottom, using minimalist glass cards */}
+            {/* Examples grid */}
             <div className="w-full max-w-2xl grid grid-cols-1 md:grid-cols-3 gap-3.5 mt-2">
               {examplePrompts.map((item, index) => (
                 <button
@@ -82,8 +87,12 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ onSendPrompt }) => {
         ) : (
           /* Message List */
           <div className="py-4">
-            {messages.map((message) => (
-              <ChatMessage key={message.id} message={message} />
+            {messages.map((message, idx) => (
+              <ChatMessage
+                key={message.id}
+                message={message}
+                isStreaming={isStreaming && idx === lastAiMessageIndex}
+              />
             ))}
             <div ref={messagesEndRef} />
           </div>

@@ -9,6 +9,7 @@ import type { Message } from '../stores/chatStore';
 
 interface ChatMessageProps {
   message: Message;
+  isStreaming?: boolean;
 }
 
 // Sub-component for individual Code Blocks with a copy button
@@ -64,8 +65,35 @@ const CodeBlock: React.FC<{ language: string; value: string }> = ({ language, va
   );
 };
 
-export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
+// Curseur clignotant animé (effet machine à écrire)
+const TypingCursor: React.FC = () => (
+  <span
+    className="inline-block w-[2px] h-[1em] bg-slg-cyan ml-0.5 align-middle rounded-sm"
+    style={{ animation: 'blink-cursor 1s step-end infinite' }}
+    aria-hidden="true"
+  />
+);
+
+// Indicateur de chargement initial (3 points animés)
+const ThinkingDots: React.FC = () => (
+  <div className="flex items-center gap-1.5 py-1">
+    {[0, 1, 2].map((i) => (
+      <span
+        key={i}
+        className="w-2 h-2 rounded-full bg-slate-400/60"
+        style={{
+          animation: `thinking-dot 1.4s ease-in-out infinite`,
+          animationDelay: `${i * 0.16}s`,
+        }}
+      />
+    ))}
+  </div>
+);
+
+export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isStreaming = false }) => {
   const isUser = message.role === 'user';
+  const isEmptyAI = !isUser && message.content === '';
+  const isActivelyStreaming = !isUser && isStreaming;
 
   return (
     <motion.div
@@ -76,8 +104,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
     >
       {/* AI Icon (Left) */}
       {!isUser && (
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center shadow-md border border-slate-200">
-          <Sparkles className="w-4 h-4 text-white" />
+        <div className={`flex-shrink-0 w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center shadow-md border border-slate-200 transition-all duration-300 ${isActivelyStreaming ? 'ring-2 ring-slg-cyan ring-offset-1 ring-offset-transparent' : ''}`}>
+          <Sparkles className={`w-4 h-4 text-white ${isActivelyStreaming ? 'animate-pulse' : ''}`} />
         </div>
       )}
 
@@ -91,6 +119,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
       >
         {isUser ? (
           <p className="whitespace-pre-wrap leading-relaxed text-sm font-sans font-medium">{message.content}</p>
+        ) : isEmptyAI ? (
+          /* Afficher les 3 points animés si le message AI est encore vide */
+          <ThinkingDots />
         ) : (
           <div className="prose max-w-none text-sm leading-relaxed font-sans prose-pre:bg-transparent prose-pre:p-0">
             <ReactMarkdown
@@ -112,7 +143,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
                     </code>
                   );
                 },
-                p: ({ children }) => <p className="mb-3 last:mb-0 text-slate-800 font-light leading-relaxed">{children}</p>,
+                p: ({ children }) => (
+                  <p className="mb-3 last:mb-0 text-slate-800 font-light leading-relaxed">
+                    {children}
+                    {/* Ajouter le curseur clignotant à la fin du dernier paragraphe si streaming actif */}
+                  </p>
+                ),
                 h1: ({ children }) => <h1 className="text-lg md:text-xl font-bold text-slate-900 mt-4 mb-2">{children}</h1>,
                 h2: ({ children }) => <h2 className="text-base md:text-lg font-bold text-slate-900 mt-3 mb-2">{children}</h2>,
                 h3: ({ children }) => <h3 className="text-sm md:text-base font-bold text-slate-900 mt-2 mb-1">{children}</h3>,
@@ -152,8 +188,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
                 ),
               }}
             >
-              {message.content || '...'}
+              {message.content}
             </ReactMarkdown>
+            {/* Curseur clignotant affiché après le contenu pendant le streaming */}
+            {isActivelyStreaming && <TypingCursor />}
           </div>
         )}
       </div>

@@ -104,3 +104,27 @@ html, body, #root {
 .glow-cyan-light {
   box-shadow: 0 0 20px rgba(0, 156, 222, 0.2);
 }
+
+/* ── Streaming animations ─────────────────────────────────── */
+
+/* Curseur clignotant (effet machine à écrire) */
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* Points de chargement (ThinkingDots) */
+@keyframes thinking-dot {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40%           { transform: scale(1);   opacity: 1;   }
+}
+
+/* Pulse subtil pour le bouton Stop */
+@keyframes pulse-subtle {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  50%      { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);  }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
