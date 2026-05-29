@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { useChatStore } from '../stores/chatStore';
 import type { Message } from '../stores/chatStore';
+import { generateUUID } from '../utils/uuid';
 
 export const useChat = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -42,7 +43,7 @@ export const useChat = () => {
 
     // 2. Ajouter le message utilisateur immédiatement (Optimistic UI)
     const userMessage: Message = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       role: 'user',
       content,
       timestamp: new Date().toISOString(),
@@ -50,7 +51,7 @@ export const useChat = () => {
     addMessage(convId, userMessage);
 
     // 3. Ajouter un message AI vide qui sera rempli au fur et à mesure
-    const aiMessageId = crypto.randomUUID();
+    const aiMessageId = generateUUID();
     const aiMessage: Message = {
       id: aiMessageId,
       role: 'assistant',

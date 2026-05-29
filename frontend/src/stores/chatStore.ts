@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { generateUUID } from '../utils/uuid';
 
 export interface Message {
   id: string;
@@ -57,7 +58,7 @@ export const useChatStore = create<ChatState>()(
       setActiveConversationId: (id) => set({ activeConversationId: id }),
 
       createConversation: (title) => {
-        const id = crypto.randomUUID();
+        const id = generateUUID();
         const newConversation: Conversation = {
           id,
           title: title || 'Nouveau Chat',
