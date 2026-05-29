@@ -9,15 +9,14 @@ interface ChatAreaProps {
 }
 
 export const ChatArea: React.FC<ChatAreaProps> = ({ onSendPrompt, isStreaming }) => {
-  // Sélecteur atomique : lit messages + activeConversationId dans la même snapshot
-  // Garantit qu'on ne voit jamais une conversation sans ses messages (ou l'inverse)
-  const { messages } = useChatStore((state) => {
+  // Sélecteur qui renvoie directement la référence du tableau (évite la création
+  // d'un nouvel objet/tableau à chaque render, ce qui causait la boucle infinie)
+  const conversationMessages = useChatStore((state) => {
     const conv = state.conversations.find((c) => c.id === state.activeConversationId);
-    return {
-      messages: conv?.messages ?? [],
-      hasConversation: !!conv,
-    };
+    return conv?.messages;
   });
+  
+  const messages = conversationMessages || [];
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
