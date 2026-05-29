@@ -18,15 +18,24 @@ const CodeBlock: React.FC<{ language: string; value: string }> = ({ language, va
 
   const handleCopy = async () => {
     try {
-      if (navigator.clipboard && window.isSecureContext) {
+      if (navigator?.clipboard?.writeText) {
         await navigator.clipboard.writeText(value);
       } else {
         // Fallback HTTP local
         const textArea = document.createElement('textarea');
         textArea.value = value;
-        textArea.style.position = 'absolute';
-        textArea.style.left = '-999999px';
-        document.body.prepend(textArea);
+        textArea.style.position = 'fixed';
+        textArea.style.top = '0';
+        textArea.style.left = '0';
+        textArea.style.width = '2em';
+        textArea.style.height = '2em';
+        textArea.style.padding = '0';
+        textArea.style.border = 'none';
+        textArea.style.outline = 'none';
+        textArea.style.boxShadow = 'none';
+        textArea.style.background = 'transparent';
+        document.body.appendChild(textArea);
+        textArea.focus();
         textArea.select();
         try {
           document.execCommand('copy');
