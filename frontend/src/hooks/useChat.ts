@@ -224,19 +224,11 @@ export const useChat = () => {
     }
   };
 
-  // Exposer aussi les valeurs du store pour les composants qui en ont besoin
-  const { activeConversationId, apiUrl, apiKey, model } = useChatStore();
-
   return {
     sendMessage,
     stopGeneration,
     isLoading,
     isStreaming,
     error,
-    // valeurs live pour l'affichage
-    activeConversationId,
-    apiUrl,
-    apiKey,
-    model,
   };
 };

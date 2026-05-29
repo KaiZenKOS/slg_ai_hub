@@ -9,21 +9,19 @@ interface ChatAreaProps {
 }
 
 export const ChatArea: React.FC<ChatAreaProps> = ({ onSendPrompt, isStreaming }) => {
-  const { conversations, activeConversationId } = useChatStore();
+  // Sélecteur atomique : lit messages + activeConversationId dans la même snapshot
+  // Garantit qu'on ne voit jamais une conversation sans ses messages (ou l'inverse)
+  const { messages } = useChatStore((state) => {
+    const conv = state.conversations.find((c) => c.id === state.activeConversationId);
+    return {
+      messages: conv?.messages ?? [],
+      hasConversation: !!conv,
+    };
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const activeConversation = conversations.find(
-    (c) => c.id === activeConversationId
-  );
-
-  const messages = activeConversation?.messages || [];
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const examplePrompts = [
