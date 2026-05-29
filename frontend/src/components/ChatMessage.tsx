@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Copy, Check, User, Sparkles } from 'lucide-react';
+import { Copy, Check, User, Sparkles, Loader2 } from 'lucide-react';
 import type { Message } from '../stores/chatStore';
 
 interface ChatMessageProps {
@@ -18,7 +18,24 @@ const CodeBlock: React.FC<{ language: string; value: string }> = ({ language, va
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(value);
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(value);
+      } else {
+        // Fallback HTTP local
+        const textArea = document.createElement('textarea');
+        textArea.value = value;
+        textArea.style.position = 'absolute';
+        textArea.style.left = '-999999px';
+        document.body.prepend(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+        } catch (error) {
+          console.error('Erreur fallback copy', error);
+        } finally {
+          textArea.remove();
+        }
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -74,19 +91,11 @@ const TypingCursor: React.FC = () => (
   />
 );
 
-// Indicateur de chargement initial (3 points animés)
+// Indicateur de chargement initial (Spinner + texte dynamique)
 const ThinkingDots: React.FC = () => (
-  <div className="flex items-center gap-1.5 py-1">
-    {[0, 1, 2].map((i) => (
-      <span
-        key={i}
-        className="w-2 h-2 rounded-full bg-slate-400/60"
-        style={{
-          animation: `thinking-dot 1.4s ease-in-out infinite`,
-          animationDelay: `${i * 0.16}s`,
-        }}
-      />
-    ))}
+  <div className="flex items-center gap-2 py-1 text-slate-500 font-sans">
+    <Loader2 className="w-4 h-4 animate-spin text-slg-cyan" />
+    <span className="text-xs font-medium animate-pulse">Qwen réfléchit...</span>
   </div>
 );
 

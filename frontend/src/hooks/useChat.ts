@@ -32,7 +32,7 @@ export const useChat = () => {
     if (!content.trim()) return;
 
     // ✅ Lecture LIVE du store au moment de l'envoi (évite les stale closures)
-    const { activeConversationId, apiUrl, apiKey, model } = useChatStore.getState();
+    const { activeConversationId, apiUrl, apiKey } = useChatStore.getState();
 
     let convId = activeConversationId;
 
@@ -100,7 +100,7 @@ export const useChat = () => {
         headers,
         signal: controller.signal,
         body: JSON.stringify({
-          model: model || 'qwen-3.6',
+          model: 'qwen-local',
           messages: apiMessages,
           stream: true,
         }),

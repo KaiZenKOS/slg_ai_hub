@@ -242,24 +242,11 @@ export const InfoPage: React.FC<InfoPageProps> = ({ onClose }) => {
     {
       "title": "SLG AI Hub — Qwen",
       "provider": "openai",
-      "model": "qwen-3.6",
-      "apiBase": "http://localhost:8000/v1",
-      "apiKey": "VOTRE_CLE_API_ICI",
-      "contextLength": 32768,
-      "completionOptions": {
-        "temperature": 0.3,
-        "maxTokens": 4096
-      }
+      "model": "qwen-local",
+      "apiBase": "http://192.168.10.90/v1",
+      "apiKey": "VOTRE_CLE_API"
     }
-  ],
-  "tabAutocompleteModel": {
-    "title": "SLG Autocomplete",
-    "provider": "openai",
-    "model": "qwen-3.6",
-    "apiBase": "http://localhost:8000/v1",
-    "apiKey": "VOTRE_CLE_API_ICI"
-  },
-  "allowAnonymousTelemetry": false
+  ]
 }`} />
                   </div>
 
@@ -322,22 +309,8 @@ export const InfoPage: React.FC<InfoPageProps> = ({ onClose }) => {
                     <p className="text-xs text-slate-500 font-light mb-2">
                       Aider utilise les variables d'environnement ou les arguments CLI pour se connecter à votre backend :
                     </p>
-                    <CopyBlock lang="bash" code={`# Méthode 1 : Variables d'environnement
-export OPENAI_API_KEY="VOTRE_CLE_API"
-export OPENAI_API_BASE="http://localhost:8000/v1"
-aider --model openai/qwen-3.6
-
-# Méthode 2 : Arguments directs (plus simple)
-aider \\
-  --model openai/qwen-3.6 \\
-  --openai-api-key VOTRE_CLE_API \\
-  --openai-api-base http://localhost:8000/v1
-
-# Méthode 3 : Avec fichiers spécifiques
-aider src/App.tsx src/components/ChatInput.tsx \\
-  --model openai/qwen-3.6 \\
-  --openai-api-key VOTRE_CLE_API \\
-  --openai-api-base http://localhost:8000/v1`} />
+                    <CopyBlock lang="bash" code={`# Méthode simple via arguments directs
+aider --model openai/qwen-local --openai-api-base http://192.168.10.90/v1 --openai-api-key VOTRE_CLE_API`} />
                   </div>
 
                   {/* Config fichier */}
