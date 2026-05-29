@@ -45,8 +45,8 @@ export const useChatStore = create<ChatState>()(
       activeConversationId: null,
       sidebarOpen: true,
       apiKey: '',
-      // Default to the user's LiteLLM endpoint, compatible with OpenAI format
-      apiUrl: 'http://localhost:8000/v1',
+      // Endpoint LiteLLM du serveur SLG
+      apiUrl: 'http://192.168.10.90/v1',
       model: 'qwen-3.6',
 
       setSidebarOpen: (open) => set({ sidebarOpen: open }),

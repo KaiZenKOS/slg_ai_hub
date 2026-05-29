@@ -76,15 +76,15 @@ export const Sidebar: React.FC = () => {
 
     // Appel test sur GET /v1/models pour valider la clé
     setApiKeyValidating(true);
+    const baseUrl = tempApiUrl.endsWith('/') ? tempApiUrl.slice(0, -1) : tempApiUrl;
     try {
-      const baseUrl = tempApiUrl.endsWith('/') ? tempApiUrl.slice(0, -1) : tempApiUrl;
       const response = await fetch(`${baseUrl}/models`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${tempApiKey}`,
           'Content-Type': 'application/json',
         },
-        signal: AbortSignal.timeout(8000), // timeout 8s
+        signal: AbortSignal.timeout(8000),
       });
 
       if (response.ok) {
@@ -93,21 +93,31 @@ export const Sidebar: React.FC = () => {
         setApiKey(tempApiKey);
         setApiUrl(tempApiUrl);
         setModel(tempModel);
-        setTimeout(() => setIsSettingsOpen(false), 800); // petit délai pour montrer le succès
+        setTimeout(() => setIsSettingsOpen(false), 800);
       } else {
-        // ❌ Erreur HTTP (401, 403, etc.)
         const status = response.status;
         if (status === 401 || status === 403) {
-          setApiKeyError('Clé API invalide ou non autorisée (HTTP ' + status + ').');
+          setApiKeyError(`Clé API refusée par le serveur (HTTP ${status}). Vérifiez la clé saisie.`);
+        } else if (status === 404) {
+          setApiKeyError(`Route /models introuvable (HTTP 404). Vérifiez que l'URL se termine bien par /v1 (ex: http://192.168.10.90/v1).`);
         } else {
-          setApiKeyError(`Erreur serveur (HTTP ${status}). Vérifiez l'URL de l'API.`);
+          setApiKeyError(`Erreur serveur inattendue (HTTP ${status}). Consultez les logs LiteLLM.`);
         }
       }
     } catch (err: any) {
       if (err.name === 'TimeoutError' || err.name === 'AbortError') {
-        setApiKeyError("Le serveur ne répond pas (timeout 8s). Vérifiez que votre backend LiteLLM est bien démarré.");
+        setApiKeyError(`Timeout : le serveur ${baseUrl} ne répond pas après 8s. Vérifiez qu'il est bien démarré.`);
+      } else if (err instanceof TypeError) {
+        // TypeError = erreur réseau (CORS, DNS, connexion refusée)
+        // Le navigateur bloque les détails pour des raisons de sécurité
+        setApiKeyError(
+          `Erreur réseau vers ${baseUrl}. Causes possibles : ` +
+          `(1) mauvaise URL — vérifiez qu'elle pointe bien sur le bon serveur et non "localhost", ` +
+          `(2) CORS non activé sur LiteLLM — ajoutez allow_origins=["*"] dans la config, ` +
+          `(3) serveur éteint. Appuyez sur F12 → Console pour voir l'erreur exacte.`
+        );
       } else {
-        setApiKeyError("Impossible de joindre l'API. Vérifiez l'URL et que le backend est accessible.");
+        setApiKeyError(`Erreur inattendue : ${err.message || 'inconnue'}. Appuyez sur F12 → Console pour le détail.`);
       }
     } finally {
       setApiKeyValidating(false);
